@@ -6,10 +6,29 @@ import Script from "next/script";
 
 function TryOnExperience() {
   const searchParams = useSearchParams();
-  const [step, setStep] = useState<"loading" | "finished">("loading");
+  const [step, setStep] = useState<"loading" | "active" | "finished">(
+    "loading"
+  );
 
   const title = searchParams.get("title") || "Produto";
   const sourceUrl = searchParams.get("sourceUrl") || "/";
+
+  const openTryOnAndWaitForClose = (btn: HTMLElement) => {
+    btn.click();
+    setStep("active");
+
+    let modalOpened = false;
+    const checkCloseInterval = setInterval(() => {
+      const hasIframe = document.querySelector("iframe");
+
+      if (hasIframe) {
+        modalOpened = true;
+      } else if (modalOpened && !hasIframe) {
+        clearInterval(checkCloseInterval);
+        setStep("finished");
+      }
+    }, 500);
+  };
 
   useEffect(() => {
     const checkButtonInterval = setInterval(() => {
@@ -19,8 +38,7 @@ function TryOnExperience() {
 
       if (tryOnBtn) {
         clearInterval(checkButtonInterval);
-        tryOnBtn.click();
-        setStep("finished");
+        openTryOnAndWaitForClose(tryOnBtn);
       }
     }, 500);
 
@@ -31,7 +49,9 @@ function TryOnExperience() {
     const tryOnBtn = document.querySelector(
       "#szb-tryon-anchor > div, #szb-tryon-anchor button, #szb-tryon-anchor a"
     ) as HTMLElement;
-    if (tryOnBtn) tryOnBtn.click();
+    if (tryOnBtn) {
+      openTryOnAndWaitForClose(tryOnBtn);
+    }
   };
 
   return (
@@ -54,6 +74,14 @@ function TryOnExperience() {
           </h1>
           <p className="text-gray-500 mt-2 text-center">
             Preparando o provador virtual para {title}
+          </p>
+        </div>
+      )}
+
+      {step === "active" && (
+        <div className="flex flex-col items-center">
+          <p className="text-gray-400 font-medium text-center">
+            Provador virtual em andamento...
           </p>
         </div>
       )}
